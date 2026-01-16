@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Favicon для Codev</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #fff;
+        }
+        .container {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        h1 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+        }
+        canvas {
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin: 20px 0;
+            background: white;
+        }
+        button {
+            background: #00ff88;
+            color: #0a0a0a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #00dd77;
+            transform: translateY(-2px);
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item canvas {
+            display: block;
+            margin: 10px auto;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 3px solid #00ff88;
+        }
+        .step {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .step-number {
+            display: inline-block;
+            background: #00ff88;
+            color: #0a0a0a;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Генератор Favicon для Codev</h1>
+        <p class="subtitle">Создайте все необходимые иконки для вашего сайта</p>
+
+        <div class="info">
+            <strong>📋 Что будет создано:</strong>
+            <ul>
+                <li>favicon.ico (32x32) - для браузеров</li>
+                <li>apple-icon.png (180x180) - для iOS устройств</li>
+                <li>icon-192.png (192x192) - для Android</li>
+                <li>icon-512.png (512x512) - для PWA</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Загрузите ваш логотип (SVG или PNG)</strong>
+            <br><br>
+            <input type="file" id="logoInput" accept="image/*">
+        </div>
+
+        <div id="previewSection" style="display: none;">
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Предварительный просмотр</strong>
+            </div>
+            
+            <div class="preview">
+                <div class="preview-item">
+                    <canvas id="canvas32" width="32" height="32"></canvas>
+                    <div>32x32 (favicon)</div>
+                </div>
+                <div class="preview-item">
+                    <canvas id="canvas180" width="180" height="180"></canvas>
+                    <div>180x180 (Apple)</div>
+                </div>
+                <div class="preview-item">
+                    <canvas id="canvas192" width="192" height="192"></canvas>
+                    <div>192x192 (Android)</div>
+                </div>
+                <div class="preview-item">
+                    <canvas id="canvas512" width="512" height="512"></canvas>
+                    <div>512x512 (PWA)</div>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Скачайте иконки</strong>
+                <br><br>
+                <button onclick="downloadFavicon()">💾 Скачать favicon.ico</button>
+                <button onclick="downloadAppleIcon()">🍎 Скачать apple-icon.png</button>
+                <button onclick="downloadIcon192()">📱 Скачать icon-192.png</button>
+                <button onclick="downloadIcon512()">🚀 Скачать icon-512.png</button>
+            </div>
+
+            <div class="info">
+                <strong>📁 Куда поместить файлы:</strong>
+                <ul>
+                    <li><code>favicon.ico</code> → <code>codev/src/app/favicon.ico</code></li>
+                    <li><code>apple-icon.png</code> → <code>codev/src/app/apple-icon.png</code></li>
+                    <li><code>icon-192.png</code> → <code>codev/public/icon-192.png</code></li>
+                    <li><code>icon-512.png</code> → <code>codev/public/icon-512.png</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let loadedImage = null;
+
+        document.getElementById('logoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    loadedImage = img;
+                    generatePreviews();
+                    document.getElementById('previewSection').style.display = 'block';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function generatePreviews() {
+            if (!loadedImage) return;
+
+            drawIcon('canvas32', 32);
+            drawIcon('canvas180', 180);
+            drawIcon('canvas192', 192);
+            drawIcon('canvas512', 512);
+        }
+
+        function drawIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Белый фон
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Рисуем изображение с отступами
+            const padding = size * 0.1;
+            const imgSize = size - (padding * 2);
+            ctx.drawImage(loadedImage, padding, padding, imgSize, imgSize);
+        }
+
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        function downloadFavicon() {
+            downloadCanvas('canvas32', 'favicon.ico');
+        }
+
+        function downloadAppleIcon() {
+            downloadCanvas('canvas180', 'apple-icon.png');
+        }
+
+        function downloadIcon192() {
+            downloadCanvas('canvas192', 'icon-192.png');
+        }
+
+        function downloadIcon512() {
+            downloadCanvas('canvas512', 'icon-512.png');
+        }
+    </script>
+</body>
+</html>

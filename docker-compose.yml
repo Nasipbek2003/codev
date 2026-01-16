@@ -1,0 +1,64 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env  # Загружает переменные из .env файла
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Переменные окружения ниже переопределят значения из .env файла
+      # - DATABASE_URL=your_database_url
+      # - API_KEY=your_api_key
+    restart: unless-stopped
+    networks:
+      - codev-network
+    # Добавляем DNS серверы для решения проблем с сетью
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # Разрешаем доступ к хост-сети
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Раскомментируйте если используете PostgreSQL
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: codev
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+  #   networks:
+  #     - codev-network
+
+  # Nginx обратный прокси (опционально)
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - app
+  #   restart: unless-stopped
+  #   networks:
+  #     - codev-network
+
+networks:
+  codev-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+
+# volumes:
+#   postgres_data:
