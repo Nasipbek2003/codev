@@ -868,6 +868,17 @@ export default function AiSolutionPicker() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-4">
+              <a 
+                href="/" 
+                className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors duration-200"
+                title="Вернуться на главную"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="hidden sm:inline text-sm">Назад</span>
+              </a>
+              <div className="h-6 w-px bg-gray-300"></div>
               <h1 className="text-lg sm:text-xl font-semibold text-black">Калькулятор стоимости</h1>
               <div className="text-xs sm:text-sm text-gray-400 font-light">
                 {step <= 4 ? `Шаг ${step} из 4` : 'Готово'}

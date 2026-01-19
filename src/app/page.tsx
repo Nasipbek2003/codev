@@ -5,6 +5,7 @@ import ProcessSection from '@/components/ProcessSection';
 import PortfolioSection from '@/components/PortfolioSection';
 import RequirementsSection from '@/components/RequirementsSection';
 import PricingSection from '@/components/PricingSection';
+import DevelopersSection from '@/components/DevelopersSection';
 import GradientGlow from '@/components/GradientGlow';
 import SectionSeparator from '@/components/SectionSeparator';
 import Footer from '@/components/Footer';
@@ -48,6 +49,13 @@ export default function Home() {
       <div id="portfolio" className="relative">
         <GradientGlow intensity="light" />
         <PortfolioSection />
+      </div>
+      
+      <SectionSeparator />
+      
+      <div id="developers" className="relative">
+        <GradientGlow intensity="medium" />
+        <DevelopersSection />
       </div>
       
       <div id="contact">
