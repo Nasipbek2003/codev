@@ -1,22 +1,17 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'standalone',
-  
-  // Указываем корневую директорию для трейсинга файлов
-  outputFileTracingRoot: path.join(__dirname, '../../'),
   
   serverExternalPackages: ['puppeteer'],
   
   eslint: {
-    // Отключаем ESLint во время продакшн сборки для Docker
+    // Отключаем ESLint во время продакшн сборки
     ignoreDuringBuilds: true,
   },
   
   typescript: {
-    // Отключаем проверку TypeScript во время продакшн сборки для Docker  
+    // Отключаем проверку TypeScript во время продакшн сборки
     ignoreBuildErrors: true,
   },
   images: {
