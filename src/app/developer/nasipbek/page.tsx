@@ -37,7 +37,7 @@ export default function DeveloperPage() {
       period: '2026 - Настоящее время',
       role: 'Fullstack разработчик',
       company: 'Codev',
-      description: 'Архитектура и разработка SaaS-решений, со+здание RESTful API, интеграция с внешними сервисами и оптимизация производительности веб-приложений'
+      description: 'Архитектура и разработка SaaS-решений, создание REST API, интеграция с внешними сервисами и оптимизация производительности веб-приложений'
     },
     {
       period: '2025',
@@ -109,7 +109,7 @@ export default function DeveloperPage() {
                     GitHub
                   </a>
                   <a
-                    href="https://t.me/nasipbek_dev"
+                    href="https://t.me/nnbek23"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
@@ -131,7 +131,7 @@ export default function DeveloperPage() {
                     WhatsApp
                   </a>
                   <a
-                    href="mailto:nasipbek.dev@gmail.com"
+                    href="mailto:abdrahmanovnasi@gmail.com"
                     className="px-6 py-3 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
