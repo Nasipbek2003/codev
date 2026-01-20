@@ -5,11 +5,6 @@ const nextConfig: NextConfig = {
   
   serverExternalPackages: ['puppeteer'],
   
-  eslint: {
-    // Отключаем ESLint во время продакшн сборки
-    ignoreDuringBuilds: true,
-  },
-  
   typescript: {
     // Отключаем проверку TypeScript во время продакшн сборки
     ignoreBuildErrors: true,
