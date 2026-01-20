@@ -15,10 +15,10 @@ export default function DevelopersSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
             Наша команда
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
             Профессионалы, создающие инновационные решения
           </p>
         </motion.div>
