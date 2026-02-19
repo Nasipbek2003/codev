@@ -34,3 +34,21 @@ model Project {
 
   @@map("projects")
 }
+
+// Таблица заявок студентов
+model StudentRequest {
+  id              Int      @id @default(autoincrement())
+  fullName        String   @map("full_name")
+  whatsapp        String
+  institution     String
+  direction       String
+  service         String
+  deadline        String
+  expectedPrice   String   @map("expected_price")
+  withWebsite     Boolean  @map("with_website")
+  description     String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("student_requests")
+}

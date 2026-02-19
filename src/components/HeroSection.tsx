@@ -85,14 +85,35 @@ export default function HeroSection() {
               </p>
             </div>
 
-            {/* CTA кнопка */}
+            {/* CTA кнопки */}
             <div
-              className={`${
+              className={`flex flex-col gap-3 ${
                 isVisible ? 'animate-scale-in' : 'opacity-0'
               }`}
               style={{ animationDelay: '1.0s' }}
             >
-              <div className="sp mx-auto lg:mx-0 w-fit">
+              {/* Кнопка для студентов с меткой НОВИНКА */}
+              <div className="mx-auto lg:mx-0 w-fit">
+                <div className="flex flex-col items-start gap-2">
+                  {/* Метка НОВИНКА слева */}
+                  <span className="inline-flex items-center justify-center px-3 py-1 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-black rounded-full animate-pulse shadow-lg whitespace-nowrap">
+                    🎓 НОВИНКА
+                  </span>
+                  
+                  {/* Кнопка заказать */}
+                  <Link href="/students">
+                    <button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      Заказать студенческую работу
+                    </button>
+                  </Link>
+                </div>
+              </div>
+              
+              {/* Кнопка калькулятора */}
+              <div className="mx-auto lg:mx-0 w-fit">
                 <Link href="/calculator">
                   <button 
                     className="sparkle-button"

@@ -1016,8 +1016,8 @@ export function generatePDFTemplate(data: ProposalData): string {
         <div class="contact-info">
             <h3>📞 Связаться с нами</h3>
             <p>Готовы обсудить детали проекта и ответить на все ваши вопросы!</p>
-            <p><strong>Telegram:</strong> <a href="https://t.me/codevai_team" style="color: #60a5fa; text-decoration: underline;">@codevai_team</a></p>
-            <p><strong>WhatsApp:</strong> <a href="https://wa.me/996700746333" style="color: #60a5fa; text-decoration: underline;">+996 700 746 333</a></p>
+            <p><strong>Telegram:</strong> <a href="https://t.me/nnbek03" style="color: #60a5fa; text-decoration: underline;">@codevai_team</a></p>
+            <p><strong>WhatsApp:</strong> <a href="https://wa.me/996501306722" style="color: #60a5fa; text-decoration: underline;">+996 700 746 333</a></p>
         </div>
         
         <!-- Footer -->

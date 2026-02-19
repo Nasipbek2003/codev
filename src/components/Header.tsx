@@ -64,8 +64,20 @@ export default function Header() {
             </a>
           </nav>
 
-          {/* Десктопная CTA кнопка */}
-          <div className="hidden md:flex relative z-10">
+          {/* Десктопные кнопки */}
+          <div className="hidden md:flex items-center gap-3 relative z-10">
+            <Link
+              href="/students"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium rounded-full px-6 py-2.5 bg-white/20 text-white border border-white/30 hover:bg-white/30 transition-all duration-200"
+            >
+              Для студентов
+            </Link>
+            <Link
+              href="/calculator"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium rounded-full px-6 py-2.5 bg-white/20 text-white border border-white/30 hover:bg-white/30 transition-all duration-200"
+            >
+              Калькулятор
+            </Link>
             <a
               href="#contact"
               className="lime-chat-button inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium rounded-full px-6 py-2.5"
@@ -201,8 +213,28 @@ export default function Header() {
                </a>
              </nav>
 
-             {/* CTA Button */}
-             <div className="mt-6 pt-4 border-t border-gray-700/30">
+             {/* CTA Buttons */}
+             <div className="mt-6 pt-4 border-t border-gray-700/30 space-y-2">
+               <Link
+                 href="/students"
+                 className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-4 py-3 bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-all duration-200"
+                 onClick={() => setIsMobileMenuOpen(false)}
+               >
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                 </svg>
+                 Для студентов
+               </Link>
+               <Link
+                 href="/calculator"
+                 className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-4 py-3 bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-all duration-200"
+                 onClick={() => setIsMobileMenuOpen(false)}
+               >
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                 </svg>
+                 Калькулятор
+               </Link>
                <a
                  href="#contact"
                  className="lime-chat-button w-full inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-4 py-3 shadow-lg"

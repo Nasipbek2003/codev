@@ -417,7 +417,7 @@ export default function TermsOfService() {
                 <span className="text-foreground/80 group-hover:text-primary transition-colors">Email</span>
               </a>
               <a 
-                href="https://t.me/codevai_team"
+                href="https://t.me/nnbek03"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3 py-2 bg-background/50 rounded-lg text-sm hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all group"
@@ -428,7 +428,7 @@ export default function TermsOfService() {
                 <span className="text-foreground/80 group-hover:text-primary transition-colors">Telegram</span>
               </a>
               <a 
-                href="https://wa.me/996700746333"
+                href="https://wa.me/996501306722"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3 py-2 bg-background/50 rounded-lg text-sm hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all group"
@@ -439,7 +439,7 @@ export default function TermsOfService() {
                 <span className="text-foreground/80 group-hover:text-primary transition-colors">WhatsApp</span>
               </a>
               <a 
-                href="https://www.instagram.com/codevai/"
+                href="https://www.instagram.com/prosmart_study/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3 py-2 bg-background/50 rounded-lg text-sm hover:bg-primary/10 hover:border-primary/20 border border-transparent transition-all group"

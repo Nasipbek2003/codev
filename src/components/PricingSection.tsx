@@ -135,21 +135,44 @@ export default function PricingSection() {
             Вы платите только за реальную работу без переплат за "престиж" агентства
           </p>
           
-          <Link href="/calculator">
-            <button className={`
-                  w-full sm:w-auto
-                  bg-primary hover:bg-primary-dark text-background 
-                  font-semibold text-base sm:text-lg lg:text-xl 
-                  px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 
-                  rounded-full transition-all duration-300 
-                  shadow-lg hover:shadow-xl 
-                  ${isMobile ? 'active:scale-95' : 'hover:scale-105'}
-                  relative overflow-hidden group
-                `}>
-                  <span className="relative z-10">Оценить проект с ИИ</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/0 via-white/10 to-primary-dark/0 transform -skew-x-12 translate-x-full group-hover:translate-x-[-100%] transition-transform duration-700"></div>
-                </button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            <Link href="/students" className="w-full sm:w-auto">
+              <button className={`
+                    w-full sm:w-auto
+                    bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white
+                    font-semibold text-base sm:text-lg lg:text-xl 
+                    px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 
+                    rounded-full transition-all duration-300 
+                    shadow-lg hover:shadow-xl 
+                    ${isMobile ? 'active:scale-95' : 'hover:scale-105'}
+                    relative overflow-hidden group
+                  `}>
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      Для студентов
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-yellow-400 text-black rounded-full animate-pulse">
+                        NEW
+                      </span>
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-white/10 to-pink-600/0 transform -skew-x-12 translate-x-full group-hover:translate-x-[-100%] transition-transform duration-700"></div>
+                  </button>
+            </Link>
+            
+            <Link href="/calculator" className="w-full sm:w-auto">
+              <button className={`
+                    w-full sm:w-auto
+                    bg-primary hover:bg-primary-dark text-background 
+                    font-semibold text-base sm:text-lg lg:text-xl 
+                    px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 
+                    rounded-full transition-all duration-300 
+                    shadow-lg hover:shadow-xl 
+                    ${isMobile ? 'active:scale-95' : 'hover:scale-105'}
+                    relative overflow-hidden group
+                  `}>
+                    <span className="relative z-10">Калькулятор стоимости</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary-dark/0 via-white/10 to-primary-dark/0 transform -skew-x-12 translate-x-full group-hover:translate-x-[-100%] transition-transform duration-700"></div>
+                  </button>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

@@ -72,11 +72,11 @@ export default function Footer() {
               
                              {/* Социальные сети и контакты */}
                <div className="space-y-4">
-                 <h4 className="text-sm font-semibold text-foreground/90 mb-3">Свяжитесь с нами</h4>
+                 <h4 className="text-sm font-semibold text-foreground/90 mb-3"></h4>
                  <div className="grid grid-cols-2 gap-3">
                    {/* Instagram */}
                    <a 
-                     href="https://www.instagram.com/codevai/" 
+                     href="https://www.instagram.com/prosmart_study/" 
                      target="_blank" 
                      rel="noopener noreferrer"
                      className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-300 group"
@@ -89,9 +89,11 @@ export default function Footer() {
                      <span className="text-xs text-foreground/70 group-hover:text-primary transition-colors">Instagram</span>
                    </a>
                    
+                   
+                   
                    {/* Telegram */}
                    <a 
-                     href="https://t.me/codevai_team" 
+                     href="https://t.me/nnbek03" 
                      target="_blank" 
                      rel="noopener noreferrer"
                      className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-300 group"
@@ -106,7 +108,7 @@ export default function Footer() {
                    
                    {/* WhatsApp */}
                    <a 
-                     href="https://wa.me/996700746333" 
+                     href="https://wa.me/996501306722" 
                      target="_blank" 
                      rel="noopener noreferrer"
                      className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-300 group"

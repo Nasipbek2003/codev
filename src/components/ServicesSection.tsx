@@ -417,7 +417,7 @@ export default function ServicesSection() {
               </Link>
               
               <a
-              href="https://t.me/codevai_team"
+              href="https://t.me/nnbek03"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto border-2 border-foreground/20 hover:border-primary text-foreground hover:text-primary font-semibold text-sm sm:text-base lg:text-lg px-6 sm:px-8 lg:px-10 py-3 sm:py-3.5 lg:py-4 rounded-full transition-all duration-300 hover:bg-primary/5 hover:scale-105 active:scale-95 flex items-center justify-center"
