@@ -38,7 +38,7 @@ export default function HeroSection() {
                   }`}
                   style={{ animationDelay: '0.4s' }}
                 >
-                  Расскажите о своё м{" "}
+                  Расскажите о своём{" "}
                 </span>
                 <span 
                   className={`text-primary ${
