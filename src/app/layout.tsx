@@ -14,14 +14,29 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Codev - IT компания | Разработка и оцифровка бизнеса",
-  description: "Codev - IT компания, которая занимается разработкой, оцифровкой бизнеса, созданием сайтов и веб-приложений. Получите расчёт стоимости проекта за минуту с нашим AI-помощником.",
+  description: "Codev — IT компания, которая занимается разработкой, оцифровкой бизнеса, созданием сайтов и веб-приложений. Получите расчёт стоимости проекта за минуту с нашим AI-помощником.",
+  metadataBase: new URL('https://codev.kg'),
+  openGraph: {
+    title: "Codev - IT компания | Разработка и оцифровка бизнеса",
+    description: "Codev — IT компания: разработка сайтов, веб-приложений, мобильных приложений и оцифровка бизнеса. Прозрачные цены, сроки — гарантированно.",
+    url: 'https://codev.kg',
+    siteName: 'Codev',
+    locale: 'ru_RU',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Codev - IT компания | Разработка и оцифровка бизнеса",
+    description: "Разработка сайтов, приложений и оцифровка бизнеса. Прозрачные цены, сдача в срок.",
+  },
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
-    apple: '/apple-icon.png',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -30,10 +45,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#00ff88" />
+        <meta name="theme-color" content="#aeef10" />
         <link
           rel="preload"
           href="/GetVoIP_Grotesque.otf"

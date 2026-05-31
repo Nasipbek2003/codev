@@ -30,11 +30,11 @@ export default function Footer() {
   ];
 
   const company = [
-    'Услуги',
-    'Процесс работы',
-    'Наши работы',
-    'Цены',
-    'Контакты'
+    { label: 'Услуги', href: '#services' },
+    { label: 'Процесс работы', href: '#process' },
+    { label: 'Наши работы', href: '#portfolio' },
+    { label: 'Цены', href: '#pricing' },
+    { label: 'Контакты', href: '#contact' }
   ];
 
   const support = [
@@ -147,9 +147,9 @@ export default function Footer() {
                   <li key={index} className={`${
                     isVisible ? 'animate-section-fade-scale' : 'opacity-0'
                   }`} style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
-                    <button className="text-sm sm:text-base text-foreground/70 hover:text-primary transition-colors duration-300 text-left">
+                    <a href="#services" className="text-sm sm:text-base text-foreground/70 hover:text-primary transition-colors duration-300 text-left block">
                       {service}
-                    </button>
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -165,9 +165,9 @@ export default function Footer() {
                   <li key={index} className={`${
                     isVisible ? 'animate-section-fade-scale' : 'opacity-0'
                   }`} style={{ animationDelay: `${0.8 + index * 0.1}s` }}>
-                    <button className="text-sm sm:text-base text-foreground/70 hover:text-primary transition-colors duration-300 text-left">
-                      {item}
-                    </button>
+                    <a href={item.href} className="text-sm sm:text-base text-foreground/70 hover:text-primary transition-colors duration-300 text-left block">
+                      {item.label}
+                    </a>
                   </li>
                 ))}
               </ul>

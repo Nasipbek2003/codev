@@ -139,21 +139,22 @@ export default function PricingSection() {
             <Link href="/students" className="w-full sm:w-auto">
               <button className={`
                     w-full sm:w-auto
-                    bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white
-                    font-semibold text-base sm:text-lg lg:text-xl 
-                    px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5 
-                    rounded-full transition-all duration-300 
-                    shadow-lg hover:shadow-xl 
+                    border-2 border-primary/50 hover:border-primary
+                    text-foreground hover:text-background hover:bg-primary
+                    bg-primary/8
+                    font-semibold text-base sm:text-lg lg:text-xl
+                    px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-5
+                    rounded-full transition-all duration-300
+                    hover:shadow-lg hover:shadow-primary/20
                     ${isMobile ? 'active:scale-95' : 'hover:scale-105'}
                     relative overflow-hidden group
                   `}>
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       Для студентов
-                      <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-yellow-400 text-black rounded-full animate-pulse">
+                      <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-primary text-background group-hover:bg-background group-hover:text-primary rounded transition-colors duration-300 leading-none">
                         NEW
                       </span>
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-white/10 to-pink-600/0 transform -skew-x-12 translate-x-full group-hover:translate-x-[-100%] transition-transform duration-700"></div>
                   </button>
             </Link>
             
