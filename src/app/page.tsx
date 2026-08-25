@@ -2,6 +2,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import StatsSection from '@/components/StatsSection';
 import ServicesSection from '@/components/ServicesSection';
+import IndustriesSection from '@/components/IndustriesSection';
 import ProcessSection from '@/components/ProcessSection';
 import PortfolioSection from '@/components/PortfolioSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
@@ -28,6 +29,14 @@ export default function Home() {
       <div id="services" className="relative">
         <GradientGlow />
         <ServicesSection />
+      </div>
+
+      <SectionSeparator />
+
+      {/* Для кого разрабатываем — клиент узнаёт свой бизнес */}
+      <div id="industries" className="relative">
+        <GradientGlow intensity="medium" />
+        <IndustriesSection />
       </div>
 
       <SectionSeparator />

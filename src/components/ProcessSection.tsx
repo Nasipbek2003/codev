@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 const processSteps = [
@@ -37,26 +37,69 @@ export default function ProcessSection() {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
   });
-  const [isMobile, setIsMobile] = useState(false);
+  
+  const [visibleSteps, setVisibleSteps] = useState<Set<number>>(new Set());
+  const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
 
+  // Прогресс линии = самый дальний открытый шаг
+  const lineProgress = visibleSteps.size === 0
+    ? 0
+    : (Math.max(...visibleSteps) + 1) / processSteps.length;
+
+  // Шаг открывается, когда его верх поднялся выше центра экрана,
+  // и остаётся открытым при дальнейшем скролле вниз.
+  // Скрывается только на обратном пути, когда снова опускается ниже линии.
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    if (motionQuery.matches) {
+      setVisibleSteps(new Set(processSteps.map((_, i) => i)));
+      return;
+    }
+
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const line = window.innerHeight / 2;
+
+      setVisibleSteps((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+
+        stepRefs.current.forEach((step, index) => {
+          if (!step) return;
+          const { top } = step.getBoundingClientRect();
+          const wasVisible = prev.has(index);
+          // Гистерезис, чтобы шаг не мерцал ровно на линии триггера
+          const shouldBeVisible = wasVisible ? top <= line + 8 : top <= line;
+
+          if (shouldBeVisible && !wasVisible) {
+            next.add(index);
+            changed = true;
+          } else if (!shouldBeVisible && wasVisible) {
+            next.delete(index);
+            changed = true;
+          }
+        });
+
+        return changed ? next : prev;
+      });
     };
 
-    checkMobile();
-
-    let resizeTimeout: NodeJS.Timeout;
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(checkMobile, 100);
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
     };
 
-    window.addEventListener('resize', handleResize);
-    
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+
     return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimeout);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
 
@@ -92,40 +135,87 @@ export default function ProcessSection() {
         </div>
 
         {/* Timeline Process Steps */}
-        <div className={`max-w-2xl mx-auto relative z-10 ${
+        <div className={`max-w-2xl mx-auto relative ${
           isVisible ? 'animate-section-reveal-up delay-400' : 'opacity-0'
         }`}>
-          <ol className={`relative space-y-4 sm:space-y-6 before:absolute before:-ml-px before:h-full before:w-0.5 before:rounded-full before:bg-gray-200 dark:before:bg-[#aeef10]/20 ${
-            isVisible ? 'before:animate-timeline-stroke' : ''
-          }`}>
-            {processSteps.map((step, index) => (
-              <li 
-                key={step.id} 
-                className={`relative -ms-1.5 flex items-start gap-4 ${
-                  isVisible ? 'animate-card-stagger' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${0.6 + index * 0.15}s` }}
-              >
-                <span className={`size-3 shrink-0 rounded-full bg-[#aeef10] ${
-                  isVisible ? 'animate-pulse-glow' : ''
-                }`}></span>
+          {/* Вертикальная линия — фон */}
+          <div className="absolute left-[15px] top-4 bottom-4 w-0.5 rounded-full bg-foreground/10" />
 
-                <div className="-mt-2">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    {step.title}
-                  </h3>
+          {/* Вертикальная линия — прогресс по скроллу */}
+          <div
+            className="absolute left-[15px] top-4 w-0.5 rounded-full bg-primary/50 origin-top"
+            style={{
+              bottom: 16,
+              transform: `scaleY(${lineProgress})`,
+              transition: 'transform 0.6s ease-out',
+              boxShadow: '0 0 8px rgba(174, 239, 16, 0.5)'
+            }}
+          />
 
-                  <p className="text-xs sm:text-sm lg:text-base text-foreground/70 max-w-2xl mx-auto font-light leading-relaxed">
-                    {step.description}
-                  </p>
-                </div>
-              </li>
-            ))}
+          {/* Шаги процесса */}
+          <ol className="relative space-y-8 sm:space-y-12 lg:space-y-16">
+            {processSteps.map((step, index) => {
+              const isStepVisible = visibleSteps.has(index);
+
+              return (
+                <li
+                  key={step.id}
+                  ref={(el) => { stepRefs.current[index] = el; }}
+                  className="relative pl-12 sm:pl-16"
+                >
+                  {/* Точка на линии — выровнена по центру номера шага */}
+                  <span
+                    className="absolute left-[10px] top-[10px] flex items-center justify-center"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className={`absolute w-4 h-4 rounded-full bg-primary transition-all duration-500 ${
+                        isStepVisible ? 'opacity-20 scale-100' : 'opacity-0 scale-50'
+                      }`}
+                    />
+                    <span
+                      className={`w-3 h-3 rounded-full bg-primary transition-all duration-500 ${
+                        isStepVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+                      }`}
+                    />
+                    <span
+                      className={`absolute w-1 h-1 rounded-full bg-white transition-opacity duration-500 delay-100 ${
+                        isStepVisible ? 'opacity-80' : 'opacity-0'
+                      }`}
+                    />
+                  </span>
+
+                  {/* Контент шага */}
+                  <div
+                    className={`transition-all duration-700 ease-out ${
+                      isStepVisible
+                        ? 'opacity-100 translate-x-0'
+                        : 'opacity-0 translate-x-8'
+                    }`}
+                  >
+                    {/* Номер шага */}
+                    <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm transition-transform duration-500 ${
+                      isStepVisible ? 'scale-100' : 'scale-75'
+                    }`}>
+                      {step.id}
+                    </div>
+
+                    <h3 className="mt-2 text-base sm:text-lg lg:text-xl font-bold text-foreground mb-2">
+                      {step.title}
+                    </h3>
+
+                    <p className="text-xs sm:text-sm lg:text-base text-foreground/70 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
           </ol>
         </div>
 
         {/* CTA внизу секции */}
-        <div className={`text-center mt-6 sm:mt-8 lg:mt-10 ${
+        <div className={`text-center mt-8 sm:mt-10 lg:mt-12 ${
           isVisible ? 'animate-section-slide-up delay-1000' : 'opacity-0'
         }`}>
           <Link href="/calculator">
