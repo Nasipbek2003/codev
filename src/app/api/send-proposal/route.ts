@@ -2,14 +2,36 @@ import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer'
 import { generatePDFTemplate, ProposalData } from '../../../lib/pdf-template'
 import { getAdminTelegramIds } from '../../../lib/database'
+import { rateLimit, getClientIp } from '../../../lib/rate-limit'
+import { validateContact, escapeHtml, safeFileNamePart } from '../../../lib/validation'
+
+/** Каждый вызов поднимает Chromium, поэтому лимит жёсткий */
+const RATE_LIMIT = { requests: 5, windowMs: 10 * 60 * 1000 }
 
 export async function POST(request: NextRequest) {
+  // Защита от флуда: без неё цикл из curl поднимает Chromium на каждый запрос
+  const ip = getClientIp(request)
+  const limit = rateLimit(`send-proposal:${ip}`, RATE_LIMIT.requests, RATE_LIMIT.windowMs)
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Слишком много заявок. Попробуйте позже.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+    )
+  }
+
   try {
     const data = await request.json()
-    const { contact } = data
+
+    // Валидируем до запуска браузера: незачем тратить ресурсы на мусор
+    const contactResult = validateContact(data?.contact)
+    if (!contactResult.ok) {
+      return NextResponse.json({ error: contactResult.error }, { status: 400 })
+    }
+    const contact = contactResult.value
 
     // Генерируем PDF
-    const pdfBuffer = await generatePDF(data)
+    const pdfBuffer = await generatePDF({ ...data, contact })
 
     // Отправляем в Telegram
     await sendToTelegram(contact, pdfBuffer)
@@ -127,8 +149,8 @@ async function generateFallbackPDF(data: ProposalData): Promise<Buffer> {
         <p><strong>Специальная скидка:</strong> -10%</p>
         
         <h2>Контактные данные</h2>
-        <p><strong>ФИО:</strong> ${data.contact.fullName}</p>
-        <p><strong>WhatsApp:</strong> ${data.contact.whatsapp}</p>
+        <p><strong>ФИО:</strong> ${escapeHtml(data.contact.fullName)}</p>
+        <p><strong>WhatsApp:</strong> ${escapeHtml(data.contact.whatsapp)}</p>
         
         <h2>Проект: ${data.proposal.title}</h2>
         <p>${data.proposal.description}</p>
@@ -197,10 +219,15 @@ async function sendToTelegram(contact: { fullName: string; whatsapp: string }, p
   const now = new Date()
   const dateStr = now.toLocaleDateString('ru-RU').replace(/\./g, '-') // ДД-ММ-ГГГГ
   const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }).replace(':', '-') // ЧЧ-ММ
-  const fileName = `Предложение_${contact.fullName.replace(/\s+/g, '_')}_${dateStr}_${timeStr}.pdf`
+  const fileName = `Предложение_${safeFileNamePart(contact.fullName)}_${dateStr}_${timeStr}.pdf`
+
+  // Экранируем: сообщение уходит с parse_mode HTML, иначе теги в ФИО
+  // станут разметкой в сообщении администратору
+  const safeName = escapeHtml(contact.fullName)
+  const safePhone = escapeHtml(contact.whatsapp)
 
   // Подготавливаем сообщения
-  const message = `🆕 Новая заявка на разработку!\n\n👤 ФИО: ${contact.fullName}\n📱 WhatsApp: ${contact.whatsapp}\n\n📄 PDF с детальным предложением прикреплен ниже.`
+  const message = `🆕 Новая заявка на разработку!\n\n👤 ФИО: ${safeName}\n📱 WhatsApp: ${safePhone}\n\n📄 PDF с детальным предложением прикреплен ниже.`
 
   // Отправляем всем администраторам
   const sendPromises = adminIds.map(async (adminId) => {

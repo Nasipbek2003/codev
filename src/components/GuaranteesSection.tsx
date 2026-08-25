@@ -1,6 +1,10 @@
 'use client';
 
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
+import useRowReveal, {
+  getSideRevealTransform,
+  REVEAL_TRANSITION
+} from '@/hooks/useRowReveal';
 
 const guarantees = [
   {
@@ -32,7 +36,7 @@ const guarantees = [
   },
   {
     title: 'Полная передача исходного кода',
-    description: 'Вы получаете все исходники, доступы и документацию. Проект полностью ваш — никакой привязки к нам.',
+    description: 'Вы получаете все исходники, доступы и документацию. Проект полностью ваш - никакой привязки к нам.',
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
@@ -45,6 +49,11 @@ export default function GuaranteesSection() {
   const { targetRef, isVisible } = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
+  });
+
+  // Количество колонок: 1 (моб.) / 2 (планшет и десктоп)
+  const { columns, rows, activeRows, setRowRef } = useRowReveal(guarantees, {
+    columns: { base: 1, sm: 2, lg: 2 }
   });
 
   return (
@@ -72,30 +81,46 @@ export default function GuaranteesSection() {
           </p>
         </div>
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto ${
-          isVisible ? 'animate-section-reveal-up delay-400' : 'opacity-0'
-        }`}>
-          {guarantees.map((guarantee, index) => (
-            <div
-              key={guarantee.title}
-              className={`flex gap-4 p-5 sm:p-6 rounded-xl border border-foreground/10 hover:border-primary/30 bg-background/80 transition-all duration-300 group ${
-                isVisible ? 'animate-card-stagger' : 'opacity-0'
-              }`}
-              style={{ animationDelay: `${0.5 + index * 0.12}s` }}
-            >
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors duration-300">
-                {guarantee.icon}
+        {/* Сетка гарантий - построчное появление с боков от центральной линии экрана */}
+        <div className="grid gap-4 sm:gap-6 max-w-4xl mx-auto">
+          {rows.map((row, rowIndex) => {
+            const isRowActive = activeRows.has(rowIndex);
+
+            return (
+              <div
+                key={`row-${rowIndex}`}
+                ref={setRowRef(rowIndex)}
+                className="grid gap-4 sm:gap-6"
+                style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+              >
+                {row.map((guarantee, indexInRow) => (
+                  <div
+                    key={guarantee.title}
+                    className="flex gap-4 p-5 sm:p-6 rounded-xl border border-foreground/10 hover:border-primary/30 bg-background/80 group will-change-transform"
+                    style={{
+                      opacity: isRowActive ? 1 : 0,
+                      transform: isRowActive
+                        ? 'translate3d(0, 0, 0)'
+                        : getSideRevealTransform(indexInRow, row.length, rowIndex),
+                      transition: REVEAL_TRANSITION
+                    }}
+                  >
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors duration-300">
+                      {guarantee.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base mb-1 group-hover:text-primary transition-colors duration-300">
+                        {guarantee.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-foreground/60 leading-relaxed">
+                        {guarantee.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground text-sm sm:text-base mb-1 group-hover:text-primary transition-colors duration-300">
-                  {guarantee.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-foreground/60 leading-relaxed">
-                  {guarantee.description}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

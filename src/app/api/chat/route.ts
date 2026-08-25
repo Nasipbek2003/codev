@@ -28,8 +28,10 @@ export async function POST(request: NextRequest) {
     }))
 
     const requestBody = {
+      // Промпт калькулятора просит объёмный JSON (функции, рекомендации,
+      // этапы, стек, риски), на 8000 токенов ответ регулярно обрезался
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8000,
+      max_tokens: 16000,
       messages: formattedMessages,
       ...(systemMessage && { system: systemMessage.content })
     }
@@ -70,6 +72,14 @@ export async function POST(request: NextRequest) {
 
     const data = JSON.parse(responseText)
     console.log('Claude API успешный ответ')
+
+    // Обрезанный по лимиту ответ даёт невалидный JSON — сообщаем об этом явно,
+    // чтобы клиент не пытался склеить неполные данные
+    if (data.stop_reason === 'max_tokens') {
+      console.warn('Ответ Claude обрезан по max_tokens', {
+        outputTokens: data.usage?.output_tokens
+      })
+    }
     
     // Преобразуем ответ Claude в формат OpenAI для совместимости с фронтендом
     const openAIFormat = {

@@ -54,7 +54,7 @@ const WHY_US = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
       </svg>
     ),
-    title: 'Уникальность 80–95%',
+    title: 'Уникальность 80-95%',
     desc: 'Проверяем каждую работу перед сдачей через Antiplagiat.',
   },
   {
@@ -96,14 +96,14 @@ const WHY_US = [
 ];
 
 const PRICES = [
-  { type: 'Реферат / СРС',      price: 'от 500 сом',    time: '1–3 дня' },
-  { type: 'Курсовая работа',    price: 'от 1 000 сом',  time: '3–7 дней' },
-  { type: 'Дипломная (ВКР)',    price: 'от 10 000 сом', time: '7–21 день' },
-  { type: 'Сайт для диплома',   price: 'от 25 000 сом', time: '7–14 дней' },
+  { type: 'Реферат / СРС',      price: 'от 500 сом',    time: '1-3 дня' },
+  { type: 'Курсовая работа',    price: 'от 1 000 сом',  time: '3-7 дней' },
+  { type: 'Дипломная (ВКР)',    price: 'от 10 000 сом', time: '7-21 день' },
+  { type: 'Сайт для диплома',   price: 'от 25 000 сом', time: '7-14 дней' },
 ];
 
 const HOW = [
-  { n: '01', title: 'Оставьте заявку', desc: 'Заполните форму ниже — это займёт 2 минуты.' },
+  { n: '01', title: 'Оставьте заявку', desc: 'Заполните форму ниже - это займёт 2 минуты.' },
   { n: '02', title: 'Обсуждаем детали', desc: 'Свяжемся в WhatsApp, уточним требования и согласуем цену.' },
   { n: '03', title: 'Работаем',         desc: 'Пишем, вы видите прогресс и можете вносить пожелания.' },
   { n: '04', title: 'Сдаёте на 5',     desc: 'Получаете готовую работу и консультацию по защите.' },
@@ -218,7 +218,7 @@ export default function StudentsPage() {
           </h1>
           <p className="text-lg text-foreground/65 max-w-xl mx-auto mb-8 leading-relaxed">
             Помогаем студентам сдавать работы на отлично. Уникальность, соблюдение
-            требований и сдача в срок — гарантированно.
+            требований и сдача в срок - гарантированно.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a href="#order"
@@ -239,7 +239,7 @@ export default function StudentsPage() {
           {[
             { v: '300+',   l: 'работ выполнено' },
             { v: '100%',   l: 'сдано в срок' },
-            { v: '80–95%', l: 'уникальность' },
+            { v: '80-95%', l: 'уникальность' },
             { v: '<10%',   l: 'ИИ-контент' },
           ].map(s => (
             <div key={s.l}>
@@ -275,7 +275,7 @@ export default function StudentsPage() {
       <section className="py-16 px-4 sm:px-6 bg-white/[0.02] border-y border-white/8">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2">Почему выбирают <span className="text-primary">нас</span></h2>
-          <p className="text-center text-foreground/55 mb-10">Не просто слова — конкретные обязательства</p>
+          <p className="text-center text-foreground/55 mb-10">Не просто слова - конкретные обязательства</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {WHY_US.map(w => (
               <div key={w.title} className="flex gap-4 p-5 rounded-xl border border-foreground/10 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 group">
@@ -296,7 +296,7 @@ export default function StudentsPage() {
       <section className="py-16 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2">Примерные <span className="text-primary">цены</span></h2>
-          <p className="text-center text-foreground/55 mb-10">Точная стоимость — после обсуждения деталей</p>
+          <p className="text-center text-foreground/55 mb-10">Точная стоимость - после обсуждения деталей</p>
           <div className="overflow-hidden rounded-xl border border-foreground/10">
             {PRICES.map((p, i) => (
               <div key={p.type} className={`flex items-center justify-between px-5 sm:px-7 py-4 gap-4 ${i !== PRICES.length - 1 ? 'border-b border-foreground/8' : ''} hover:bg-primary/5 transition-colors`}>
@@ -339,7 +339,7 @@ export default function StudentsPage() {
       <section id="order" className="py-16 px-4 sm:px-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2">Оставить <span className="text-primary">заявку</span></h2>
-          <p className="text-center text-foreground/55 mb-10">Заполните форму — свяжемся в течение 30 минут</p>
+          <p className="text-center text-foreground/55 mb-10">Заполните форму - свяжемся в течение 30 минут</p>
 
           <form onSubmit={handleSubmit} className="space-y-5 bg-white/[0.03] border border-foreground/10 rounded-2xl p-6 sm:p-8">
 
@@ -438,7 +438,7 @@ export default function StudentsPage() {
                   required
                   value={formData.expectedPrice}
                   onChange={e => setFormData({...formData, expectedPrice: e.target.value})}
-                  placeholder="Например: 3000–5000"
+                  placeholder="Например: 3000-5000"
                   className="w-full px-4 py-3 rounded-lg bg-background border border-foreground/15 text-foreground placeholder:text-foreground/30 focus:border-primary focus:outline-none transition-colors"
                 />
               </div>
@@ -486,7 +486,7 @@ export default function StudentsPage() {
 
           </form>
 
-          {/* Альтернатива — написать напрямую */}
+          {/* Альтернатива - написать напрямую */}
           <p className="text-center text-sm text-foreground/40 mt-6">
             Или напишите напрямую в{' '}
             <a href="https://t.me/nnbek03" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Telegram</a>

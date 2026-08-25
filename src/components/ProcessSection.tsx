@@ -138,10 +138,10 @@ export default function ProcessSection() {
         <div className={`max-w-2xl mx-auto relative ${
           isVisible ? 'animate-section-reveal-up delay-400' : 'opacity-0'
         }`}>
-          {/* Вертикальная линия — фон */}
+          {/* Вертикальная линия - фон */}
           <div className="absolute left-[15px] top-4 bottom-4 w-0.5 rounded-full bg-foreground/10" />
 
-          {/* Вертикальная линия — прогресс по скроллу */}
+          {/* Вертикальная линия - прогресс по скроллу */}
           <div
             className="absolute left-[15px] top-4 w-0.5 rounded-full bg-primary/50 origin-top"
             style={{
@@ -163,7 +163,7 @@ export default function ProcessSection() {
                   ref={(el) => { stepRefs.current[index] = el; }}
                   className="relative pl-12 sm:pl-16"
                 >
-                  {/* Точка на линии — выровнена по центру номера шага */}
+                  {/* Точка на линии - выровнена по центру номера шага */}
                   <span
                     className="absolute left-[10px] top-[10px] flex items-center justify-center"
                     aria-hidden="true"

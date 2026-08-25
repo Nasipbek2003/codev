@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import puppeteer from 'puppeteer'
 import { generatePDFTemplate, ProposalData } from '../../../lib/pdf-template'
+import { rateLimit, getClientIp } from '../../../lib/rate-limit'
+import { validateContact, escapeHtml } from '../../../lib/validation'
+
+/** Каждый вызов поднимает Chromium, поэтому лимит жёсткий */
+const RATE_LIMIT = { requests: 10, windowMs: 10 * 60 * 1000 }
 
 export async function POST(request: NextRequest) {
+  // Защита от флуда: без неё цикл из curl поднимает Chromium на каждый запрос
+  const ip = getClientIp(request)
+  const limit = rateLimit(`generate-pdf:${ip}`, RATE_LIMIT.requests, RATE_LIMIT.windowMs)
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Слишком много запросов. Попробуйте позже.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+    )
+  }
+
   try {
     const data = await request.json()
 
+    // Валидируем до запуска браузера: незачем тратить ресурсы на мусор
+    const contactResult = validateContact(data?.contact)
+    if (!contactResult.ok) {
+      return NextResponse.json({ error: contactResult.error }, { status: 400 })
+    }
+
     // Генерируем PDF
-    const pdfBuffer = await generatePDF(data)
+    const pdfBuffer = await generatePDF({ ...data, contact: contactResult.value })
 
     return new NextResponse(pdfBuffer, {
       headers: {
@@ -127,8 +149,8 @@ async function generateFallbackPDF(data: ProposalData): Promise<Buffer> {
         <p><strong>Специальная скидка:</strong> -10%</p>
         
         <h2>Контактные данные</h2>
-        <p><strong>ФИО:</strong> ${data.contact.fullName}</p>
-        <p><strong>WhatsApp:</strong> ${data.contact.whatsapp}</p>
+        <p><strong>ФИО:</strong> ${escapeHtml(data.contact.fullName)}</p>
+        <p><strong>WhatsApp:</strong> ${escapeHtml(data.contact.whatsapp)}</p>
         
         <h2>Проект: ${data.proposal.title}</h2>
         <p>${data.proposal.description}</p>

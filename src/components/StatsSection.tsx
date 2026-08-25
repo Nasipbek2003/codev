@@ -5,7 +5,7 @@ import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 
 const stats = [
   {
-    value: 15,
+    value: 100,
     suffix: '+',
     label: 'Проектов реализовано',
     icon: (
@@ -15,7 +15,7 @@ const stats = [
     )
   },
   {
-    value: 10,
+    value: 60,
     suffix: '+',
     label: 'Довольных клиентов',
     icon: (
@@ -35,8 +35,8 @@ const stats = [
     )
   },
   {
-    value: 2,
-    suffix: '+',
+    value: 3,
+    suffix: '',
     label: 'Года на рынке',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

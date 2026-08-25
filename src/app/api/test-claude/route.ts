@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  // Отладочный эндпоинт: раскрывает префикс API-ключа и тратит токены
+  // на каждый запрос. В проде должен быть недоступен.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     

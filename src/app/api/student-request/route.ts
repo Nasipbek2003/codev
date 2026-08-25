@@ -1,13 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { getAdminTelegramIds } from '../../../lib/database';
+// Используем общий синглтон: свой new PrismaClient() создавал
+// отдельный пул коннекшенов на каждый инстанс роута
+import { prisma } from '../../../lib/prisma';
+import { rateLimit, getClientIp } from '../../../lib/rate-limit';
+import {
+  sanitizeString,
+  isPlausiblePhone,
+  escapeHtml,
+  FIELD_LIMITS
+} from '../../../lib/validation';
 
-const prisma = new PrismaClient();
+/** Заявки студентов: пишутся в БД и уходят в Telegram, нужен потолок на спам */
+const RATE_LIMIT = { requests: 5, windowMs: 10 * 60 * 1000 };
 
 export async function POST(request: NextRequest) {
+  // Без лимита любой может залить таблицу и завалить админов сообщениями
+  const ip = getClientIp(request);
+  const limit = rateLimit(`student-request:${ip}`, RATE_LIMIT.requests, RATE_LIMIT.windowMs);
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Слишком много заявок. Попробуйте позже.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const data = await request.json();
-    const {
+
+    // Нормализуем и обрезаем по длине: раньше проверялась только непустота,
+    // и в БД могла уехать строка любого размера
+    const fullName = sanitizeString(data?.fullName, FIELD_LIMITS.name);
+    const whatsapp = sanitizeString(data?.whatsapp, FIELD_LIMITS.phone);
+    const institution = sanitizeString(data?.institution, FIELD_LIMITS.shortText);
+    const direction = sanitizeString(data?.direction, FIELD_LIMITS.shortText);
+    const service = sanitizeString(data?.service, FIELD_LIMITS.shortText);
+    const deadline = sanitizeString(data?.deadline, FIELD_LIMITS.shortText);
+    const expectedPrice = sanitizeString(data?.expectedPrice, FIELD_LIMITS.shortText);
+    const description = sanitizeString(data?.description, FIELD_LIMITS.longText);
+    const withWebsite = data?.withWebsite === true;
+
+    // Валидация обязательных полей
+    if (!fullName || !institution || !direction || !service || !deadline || !expectedPrice) {
+      return NextResponse.json(
+        { error: 'Все обязательные поля должны быть заполнены' },
+        { status: 400 }
+      );
+    }
+
+    if (!isPlausiblePhone(whatsapp)) {
+      return NextResponse.json(
+        { error: 'Некорректный номер телефона' },
+        { status: 400 }
+      );
+    }
+
+    const payload = {
       fullName,
       whatsapp,
       institution,
@@ -16,34 +65,14 @@ export async function POST(request: NextRequest) {
       deadline,
       expectedPrice,
       withWebsite,
-      description
-    } = data;
-
-    // Валидация обязательных полей
-    if (!fullName || !whatsapp || !institution || !direction || !service || !deadline || !expectedPrice) {
-      return NextResponse.json(
-        { error: 'Все обязательные поля должны быть заполнены' },
-        { status: 400 }
-      );
-    }
+      description: description || null
+    };
 
     // Сохраняем в базу данных
-    const studentRequest = await prisma.studentRequest.create({
-      data: {
-        fullName,
-        whatsapp,
-        institution,
-        direction,
-        service,
-        deadline,
-        expectedPrice,
-        withWebsite: withWebsite || false,
-        description: description || null
-      }
-    });
+    const studentRequest = await prisma.studentRequest.create({ data: payload });
 
     // Отправляем в Telegram
-    await sendToTelegram(data);
+    await sendToTelegram(payload);
 
     return NextResponse.json({ success: true, id: studentRequest.id });
   } catch (error) {
@@ -73,22 +102,23 @@ async function sendToTelegram(data: any) {
 
   console.log(`Отправляем уведомления ${adminIds.length} администраторам:`, adminIds);
 
-  // Формируем сообщение
+  // Сообщение уходит с parse_mode HTML, поэтому весь пользовательский ввод
+  // экранируем: иначе теги из полей формы станут разметкой у администратора
   const message = `
 🎓 <b>Новая заявка от студента!</b>
 
-👤 <b>ФИО:</b> ${data.fullName}
-📱 <b>WhatsApp:</b> ${data.whatsapp}
+👤 <b>ФИО:</b> ${escapeHtml(data.fullName)}
+📱 <b>WhatsApp:</b> ${escapeHtml(data.whatsapp)}
 
-🏫 <b>Учебное заведение:</b> ${data.institution}
-📚 <b>Направление:</b> ${data.direction}
+🏫 <b>Учебное заведение:</b> ${escapeHtml(data.institution)}
+📚 <b>Направление:</b> ${escapeHtml(data.direction)}
 
-📝 <b>Услуга:</b> ${data.service}
-📅 <b>Срок сдачи:</b> ${data.deadline}
-💰 <b>Ожидаемая цена:</b> ${data.expectedPrice} KGS
+📝 <b>Услуга:</b> ${escapeHtml(data.service)}
+📅 <b>Срок сдачи:</b> ${escapeHtml(data.deadline)}
+💰 <b>Ожидаемая цена:</b> ${escapeHtml(data.expectedPrice)} KGS
 🌐 <b>С сайтом:</b> ${data.withWebsite ? 'Да' : 'Нет'}
 
-${data.description ? `📄 <b>Описание:</b>\n${data.description}` : ''}
+${data.description ? `📄 <b>Описание:</b>\n${escapeHtml(data.description)}` : ''}
 
 ⏰ <b>Дата заявки:</b> ${new Date().toLocaleString('ru-RU')}
   `.trim();

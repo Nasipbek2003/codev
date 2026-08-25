@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
       content: (
         <div>
           <p className="text-foreground/80 leading-relaxed mb-4">
-            Настоящая Политика конфиденциальности определяет порядок обработки и защиты информации о пользователях услуг <span className="text-primary font-semibold">Codev</span> (далее — «Компания»).
+            Настоящая Политика конфиденциальности определяет порядок обработки и защиты информации о пользователях услуг <span className="text-primary font-semibold">Codev</span> (далее - «Компания»).
           </p>
           <p className="text-foreground/70 leading-relaxed">
             Мы стремимся обеспечить максимальную безопасность ваших персональных данных и соблюдаем все требования действующего законодательства.

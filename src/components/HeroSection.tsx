@@ -54,7 +54,7 @@ export default function HeroSection() {
                   }`}
                   style={{ animationDelay: '0.6s' }}
                 >
-                  {" "}— получите идею{" "}
+                  {" "}- получите идею{" "}
                 </span>
                 <span 
                   className={`text-primary ${

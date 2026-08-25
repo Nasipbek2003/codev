@@ -1,13 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
-
-/** Смещение карточки до появления, px (мягкое, без масштаба и блюра) */
-const OFFSET = 40;
-/** Запас, чтобы карточка не мерцала ровно на линии триггера */
-const HYSTERESIS = 8;
+import useRowReveal, {
+  getEdgeRevealTransform,
+  REVEAL_TRANSITION
+} from '@/hooks/useRowReveal';
 
 const industries = [
   {
@@ -120,121 +118,16 @@ const industries = [
   }
 ];
 
-/** Направление выезда карточки в зависимости от её места в строке */
-function getHiddenTransform(
-  indexInRow: number,
-  rowLength: number,
-  rowIndex: number
-): string {
-  // Одна колонка (мобильный): чередуем стороны — слева, справа, слева…
-  if (rowLength === 1) {
-    return rowIndex % 2 === 0
-      ? `translate3d(-${OFFSET}px, 0, 0)`
-      : `translate3d(${OFFSET}px, 0, 0)`;
-  }
-
-  if (indexInRow === 0) return `translate3d(-${OFFSET}px, 0, 0)`;
-  if (indexInRow === rowLength - 1) return `translate3d(${OFFSET}px, 0, 0)`;
-  return `translate3d(0, ${OFFSET}px, 0)`;
-}
-
 export default function IndustriesSection() {
   const { targetRef, isVisible } = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
   });
 
-  // Количество колонок: 1 (моб.) / 2 (планшет) / 3 (десктоп).
-  // Стартуем с 3 — совпадает с серверным рендером, уточняем после гидрации.
-  const [columns, setColumns] = useState(3);
-  const [activeRows, setActiveRows] = useState<Set<number>>(new Set());
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // Разбиваем список на строки по текущему числу колонок
-  const rows = useMemo(() => {
-    const chunks: typeof industries[] = [];
-    for (let i = 0; i < industries.length; i += columns) {
-      chunks.push(industries.slice(i, i + columns));
-    }
-    return chunks;
-  }, [columns]);
-
-  // Отслеживаем брейкпоинты и prefers-reduced-motion
-  useEffect(() => {
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const syncMotion = () => setReducedMotion(motionQuery.matches);
-    syncMotion();
-    motionQuery.addEventListener('change', syncMotion);
-
-    const syncColumns = () => {
-      const width = window.innerWidth;
-      setColumns(width >= 1024 ? 3 : width >= 640 ? 2 : 1);
-    };
-    syncColumns();
-    window.addEventListener('resize', syncColumns);
-
-    return () => {
-      motionQuery.removeEventListener('change', syncMotion);
-      window.removeEventListener('resize', syncColumns);
-    };
-  }, []);
-
-  // Строка активна, когда её верх поднялся выше центра экрана.
-  // Обратное условие даёт симметричное скрытие при скролле вверх.
-  useEffect(() => {
-    if (reducedMotion) {
-      setActiveRows(new Set(rows.map((_, i) => i)));
-      return;
-    }
-
-    let frame = 0;
-
-    const update = () => {
-      frame = 0;
-      const line = window.innerHeight / 2;
-
-      setActiveRows((prev) => {
-        const next = new Set(prev);
-        let changed = false;
-
-        rowRefs.current.forEach((row, index) => {
-          if (!row) return;
-          const { top } = row.getBoundingClientRect();
-          const wasActive = prev.has(index);
-          // Гистерезис: порог включения и выключения слегка разнесён
-          const shouldBeActive = wasActive
-            ? top <= line + HYSTERESIS
-            : top <= line;
-
-          if (shouldBeActive && !wasActive) {
-            next.add(index);
-            changed = true;
-          } else if (!shouldBeActive && wasActive) {
-            next.delete(index);
-            changed = true;
-          }
-        });
-
-        return changed ? next : prev;
-      });
-    };
-
-    const onScroll = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(update);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    update();
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, [rows, reducedMotion]);
+  // Количество колонок: 1 (моб.) / 2 (планшет) / 3 (десктоп)
+  const { columns, rows, activeRows, setRowRef } = useRowReveal(industries, {
+    columns: { base: 1, sm: 2, lg: 3 }
+  });
 
   return (
     <section
@@ -259,11 +152,11 @@ export default function IndustriesSection() {
           <p className={`text-sm sm:text-base lg:text-lg text-foreground/70 max-w-2xl mx-auto font-light leading-relaxed ${
             isVisible ? 'animate-section-fade-scale delay-200' : 'opacity-0'
           }`}>
-            Знаем специфику этих сфер — не начинаем с нуля, а сразу предлагаем работающие решения
+            Знаем специфику этих сфер - не начинаем с нуля, а сразу предлагаем работающие решения
           </p>
         </div>
 
-        {/* Сетка сфер — построчное появление от центральной линии экрана */}
+        {/* Сетка сфер - построчное появление от центральной линии экрана */}
         <div className="grid gap-4 sm:gap-5 max-w-6xl mx-auto">
           {rows.map((row, rowIndex) => {
             const isRowActive = activeRows.has(rowIndex);
@@ -271,7 +164,7 @@ export default function IndustriesSection() {
             return (
               <div
                 key={`row-${rowIndex}`}
-                ref={(el) => { rowRefs.current[rowIndex] = el; }}
+                ref={setRowRef(rowIndex)}
                 className="grid gap-4 sm:gap-5"
                 style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
               >
@@ -283,9 +176,8 @@ export default function IndustriesSection() {
                       opacity: isRowActive ? 1 : 0,
                       transform: isRowActive
                         ? 'translate3d(0, 0, 0)'
-                        : getHiddenTransform(indexInRow, row.length, rowIndex),
-                      transition:
-                        'opacity 600ms ease-out, transform 600ms ease-out, border-color 300ms ease-out, background-color 300ms ease-out'
+                        : getEdgeRevealTransform(indexInRow, row.length, rowIndex),
+                      transition: REVEAL_TRANSITION
                     }}
                   >
                     <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors duration-300">
@@ -311,7 +203,7 @@ export default function IndustriesSection() {
           isVisible ? 'animate-section-slide-up delay-1000' : 'opacity-0'
         }`}>
           <p className="text-sm sm:text-base text-foreground/70 mb-4">
-            Не нашли свою сферу? Мы работаем с любым бизнесом — опишите задачу, и ИИ-ассистент
+            Не нашли свою сферу? Мы работаем с любым бизнесом - опишите задачу, и ИИ-ассистент
             подберёт решение с расчётом стоимости.
           </p>
 

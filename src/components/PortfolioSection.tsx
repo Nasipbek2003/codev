@@ -114,6 +114,33 @@ const fallbackProjects: ProjectDisplay[] = [
     link: 'https://masterservic.kg/',
     category: 'Маркетплейс',
     stack: ['React', 'Node.js', 'MongoDB', 'WebSocket', 'Docker']
+  },
+  {
+    id: 11,
+    name: 'Kupi.kg',
+    description: 'Интернет-магазин техники и электроники с каталогом, корзиной и доставкой по Кыргызстану',
+    image: '/kupi.png',
+    link: 'https://kupi.kg',
+    category: 'Интернет-магазин',
+    stack: ['Next.js', 'PostgreSQL', 'Prisma', 'Tailwind CSS']
+  },
+  {
+    id: 12,
+    name: 'Alatoo Building',
+    description: 'Сайт строительной компании: услуги, реализованные объекты и приём заявок на проекты',
+    image: '/stroykomp.png',
+    link: 'https://www.alatoobuilding.kg/ru',
+    category: 'Строительство',
+    stack: ['Next.js', 'Tailwind CSS', 'PostgreSQL', 'Prisma']
+  },
+  {
+    id: 13,
+    name: 'DNS Shop KG',
+    description: 'Компьютерный магазин с каталогом комплектующих, фильтрами и онлайн-заказом',
+    image: '/komp.png',
+    link: 'https://dns-shop.kg/',
+    category: 'E-commerce',
+    stack: ['Next.js', 'PostgreSQL', 'Prisma', 'Redis']
   }
 ];
 
@@ -240,6 +267,9 @@ export default function PortfolioSection() {
             ['React', 'Node.js', 'PostgreSQL', 'Chart.js'], // Аналитика
             ['Next.js', 'Socket.io', 'Redis', 'AWS S3'], // Образование
             ['React', 'Node.js', 'MongoDB', 'WebSocket', 'Docker'], // Маркетплейс
+            ['Next.js', 'PostgreSQL', 'Prisma', 'Tailwind CSS'], // Kupi.kg
+            ['Next.js', 'Tailwind CSS', 'PostgreSQL', 'Prisma'], // Alatoo Building
+            ['Next.js', 'PostgreSQL', 'Prisma', 'Redis'], // DNS Shop KG
           ];
           
           const categoryVariations = [
@@ -253,6 +283,9 @@ export default function PortfolioSection() {
             'Аналитика',
             'Образование',
             'Маркетплейс',
+            'Интернет-магазин',
+            'Строительство',
+            'E-commerce',
           ];
           
           setProjects(data.projects.map((p: Project, idx: number) => ({
@@ -298,7 +331,7 @@ export default function PortfolioSection() {
           </h2>
           
           <p className={`text-base sm:text-lg lg:text-xl text-foreground/60 max-w-3xl mx-auto font-light leading-relaxed ${isVisible ? 'animate-section-fade-scale delay-200' : 'opacity-0'}`}>
-            Реальные продукты, которые работают прямо сейчас — проверьте их функциональность, скорость, дизайн
+            Реальные продукты, которые работают прямо сейчас - проверьте их функциональность, скорость, дизайн
           </p>
         </div>
 
@@ -337,7 +370,7 @@ export default function PortfolioSection() {
             </h3>
             
             <p className="text-base sm:text-lg text-foreground/60">
-              Опишите идею нашему AI-ассистенту — получите расчет стоимости за минуту
+              Опишите идею нашему AI-ассистенту - получите расчет стоимости за минуту
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

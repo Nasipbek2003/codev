@@ -21,7 +21,7 @@ export default function Home() {
       <Header />
       <HeroSection />
 
-      {/* Статистика — социальное доказательство сразу после hero */}
+      {/* Статистика - социальное доказательство сразу после hero */}
       <StatsSection />
 
       <SectionSeparator />
@@ -33,7 +33,7 @@ export default function Home() {
 
       <SectionSeparator />
 
-      {/* Для кого разрабатываем — клиент узнаёт свой бизнес */}
+      {/* Для кого разрабатываем - клиент узнаёт свой бизнес */}
       <div id="industries" className="relative">
         <GradientGlow intensity="medium" />
         <IndustriesSection />
@@ -69,7 +69,7 @@ export default function Home() {
 
       <SectionSeparator />
 
-      {/* Отзывы клиентов — ключевой элемент доверия */}
+      {/* Отзывы клиентов - ключевой элемент доверия */}
       <div id="testimonials" className="relative">
         <GradientGlow intensity="medium" />
         <TestimonialsSection />
@@ -77,7 +77,7 @@ export default function Home() {
 
       <SectionSeparator />
 
-      {/* Гарантии — снимают страхи клиента */}
+      {/* Гарантии - снимают страхи клиента */}
       <div id="guarantees" className="relative">
         <GradientGlow intensity="light" />
         <GuaranteesSection />
@@ -85,7 +85,7 @@ export default function Home() {
 
       <SectionSeparator />
 
-      {/* FAQ — снимают последние вопросы перед заказом */}
+      {/* FAQ - снимают последние вопросы перед заказом */}
       <div id="faq" className="relative">
         <GradientGlow intensity="medium" />
         <FAQSection />

@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
+import useRowReveal, {
+  getSideRevealTransform,
+  REVEAL_TRANSITION
+} from '@/hooks/useRowReveal';
 
 // Принципы прозрачности
 const transparencyPrinciples = [
@@ -38,6 +42,12 @@ export default function PricingSection() {
     rootMargin: '0px 0px -50px 0px'
   });
   const [isMobile, setIsMobile] = useState(false);
+
+  // Количество колонок: 1 (моб.) / 2 (планшет и десктоп)
+  const { columns, rows, activeRows, setRowRef } = useRowReveal(
+    transparencyPrinciples,
+    { columns: { base: 1, sm: 2, lg: 2 } }
+  );
 
   useEffect(() => {
     const checkMobile = () => {
@@ -79,51 +89,59 @@ export default function PricingSection() {
           </p>
         </div>
 
-                 {/* Принципы в виде сетки 2x2 */}
-         <div className={`max-w-6xl mx-auto ${
-           isVisible ? 'animate-section-reveal-up delay-400' : 'opacity-0'
-         }`}>
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-             {transparencyPrinciples.map((principle, index) => (
-               <div
-                 key={principle.number}
-                 className={`
-                   group flex flex-col items-start gap-3 sm:gap-4
-                   p-4 sm:p-5 rounded-lg
-                   border-l-4 border-primary/30 hover:border-primary/60
-                   bg-gradient-to-r from-primary/5 to-transparent hover:from-primary/10
-                   transition-all duration-300 ease-out
-                   ${isVisible ? 'animate-pricing-grid' : 'opacity-0'}
-                 `}
-                 style={{ animationDelay: `${0.6 + index * 0.1}s` }}
-               >
-                 {/* Номер и заголовок */}
-                 <div className="flex items-center gap-3">
-                   <div className="flex-shrink-0">
-                     <div className="w-10 h-10 sm:w-11 sm:h-11 bg-primary/20 rounded-full flex items-center justify-center group-hover:bg-primary/30 transition-colors duration-300">
-                       <span className="text-base sm:text-lg font-bold text-primary">
-                         {principle.number}
-                       </span>
-                     </div>
-                   </div>
-                   <h3 className="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
-                     {principle.title}
-                   </h3>
-                 </div>
+        {/* Принципы - построчное появление с боков от центральной линии экрана */}
+        <div className="grid gap-4 sm:gap-6 max-w-6xl mx-auto">
+          {rows.map((row, rowIndex) => {
+            const isRowActive = activeRows.has(rowIndex);
 
-                 {/* Контент */}
-                 <div className="space-y-2">
-                   <p className="text-xs sm:text-sm text-foreground/70 leading-relaxed">
-                     {principle.description}
-                   </p>
-                   <div className="text-xs text-primary/80 font-medium">
-                     {principle.detail}
-                   </div>
-                 </div>
-               </div>
-             ))}
-           </div>
-         </div>
+            return (
+              <div
+                key={`row-${rowIndex}`}
+                ref={setRowRef(rowIndex)}
+                className="grid gap-4 sm:gap-6"
+                style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+              >
+                {row.map((principle, indexInRow) => (
+                  <div
+                    key={principle.number}
+                    className="group flex flex-col items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-lg border-l-4 border-primary/30 hover:border-primary/60 bg-gradient-to-r from-primary/5 to-transparent hover:from-primary/10 will-change-transform"
+                    style={{
+                      opacity: isRowActive ? 1 : 0,
+                      transform: isRowActive
+                        ? 'translate3d(0, 0, 0)'
+                        : getSideRevealTransform(indexInRow, row.length, rowIndex),
+                      transition: REVEAL_TRANSITION
+                    }}
+                  >
+                    {/* Номер и заголовок */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 bg-primary/20 rounded-full flex items-center justify-center group-hover:bg-primary/30 transition-colors duration-300">
+                          <span className="text-base sm:text-lg font-bold text-primary">
+                            {principle.number}
+                          </span>
+                        </div>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                        {principle.title}
+                      </h3>
+                    </div>
+
+                    {/* Контент */}
+                    <div className="space-y-2">
+                      <p className="text-xs sm:text-sm text-foreground/70 leading-relaxed">
+                        {principle.description}
+                      </p>
+                      <div className="text-xs text-primary/80 font-medium">
+                        {principle.detail}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
 
         {/* Итоговое сообщение */}
         <div

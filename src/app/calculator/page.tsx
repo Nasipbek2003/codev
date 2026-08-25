@@ -1,34 +1,11 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react'
-import _ from 'lodash'
+import React, { useState, useEffect } from 'react'
 import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js'
 
 // NOTE: This single-file React component assumes TailwindCSS is available
 // If you don't have Tailwind in your environment, include the CDN in index.html:
 // <script src="https://cdn.tailwindcss.com"></script>
-
-interface Preset {
-  label: string;
-  business: string[];
-  goals: string[];
-  techs: string[];
-}
-
-interface Plan {
-  level: string;
-  price: number;
-  timeline_weeks: number;
-  modules: string[];
-  details: string;
-}
-
-interface Common {
-  stack: string[];
-  integrations: string[];
-  roi: string;
-  nextSteps: string[];
-}
 
 interface Proposal {
   price: number;
@@ -70,6 +47,79 @@ interface Proposal {
 interface Contact {
   fullName: string;
   whatsapp: string;
+}
+
+/** Границы слайдера бюджета, KGS */
+const BUDGET_LIMITS = { min: 20000, max: 2000000 }
+/** Стартовый диапазон - правдоподобный, а не «весь слайдер» */
+const DEFAULT_BUDGET = { min: 80000, max: 250000 }
+/** Границы слайдера сроков, недели */
+const TIMELINE_LIMITS = { min: 1, max: 52 }
+
+/** Конечное положительное число */
+function isPositiveNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+/**
+ * Подгоняет длительность этапов так, чтобы их сумма совпадала с общим сроком.
+ * Без этого клиент видит в одном документе «8 недель» и этапы на 11 недель.
+ */
+function normalizePhases<T extends { duration_weeks: number; deliverables?: string[] }>(
+  phases: T[],
+  totalWeeks: number
+): T[] {
+  if (!Array.isArray(phases) || phases.length === 0) return phases
+
+  const safeTotal = Math.max(1, Math.round(totalWeeks))
+
+  const sanitized = phases.map((phase) => ({
+    ...phase,
+    duration_weeks: isPositiveNumber(phase?.duration_weeks) ? phase.duration_weeks : 1
+  }))
+
+  // Этапов больше, чем недель: минимум в 1 неделю не позволит сумме сойтись,
+  // поэтому хвост сливаем в последний этап, сохраняя его результаты
+  let working = sanitized
+  if (safeTotal < working.length) {
+    const head = working.slice(0, safeTotal - 1)
+    const tail = working.slice(safeTotal - 1)
+    const mergedDeliverables = Array.from(
+      new Set(tail.flatMap((phase) => phase.deliverables ?? []))
+    )
+    const merged = {
+      ...tail[tail.length - 1],
+      ...(mergedDeliverables.length > 0 && { deliverables: mergedDeliverables })
+    }
+    working = [...head, merged]
+  }
+
+  const sum = working.reduce((acc, phase) => acc + phase.duration_weeks, 0)
+  if (sum === safeTotal) return working
+
+  // Распределяем общий срок пропорционально исходным весам,
+  // остаток от округления добираем последним этапом
+  const scaled = working.map((phase) => ({
+    ...phase,
+    duration_weeks: Math.max(1, Math.round((phase.duration_weeks / sum) * safeTotal))
+  }))
+
+  const scaledSum = scaled.reduce((acc, phase) => acc + phase.duration_weeks, 0)
+  const diff = safeTotal - scaledSum
+
+  if (diff !== 0) {
+    const lastIndex = scaled.length - 1
+    scaled[lastIndex] = {
+      ...scaled[lastIndex],
+      duration_weeks: Math.max(1, scaled[lastIndex].duration_weeks + diff)
+    }
+  }
+
+  return scaled
 }
 
 // Typewriter анимация компонент
@@ -152,29 +202,26 @@ export default function AiSolutionPicker() {
   const TECHS = [
     'Сайт','Интернет-магазин','Мобильное приложение','Telegram-бот','WhatsApp-бот','CRM','ERP','BI-дэшборд','1С','Интеграции с кассой','Онлайн-платежи'
   ]
-  const PRESETS: Preset[] = [
-    {label: 'Ресторан — Доставка', business: ['Ресторан'], goals: ['Доставка','Онлайн-оплата','Поддержка'], techs: ['Сайт','Интеграции с кассой','Платежи','Telegram-бот']},
-    {label: 'Магазин — Онлайн-продажи', business: ['Розница'], goals: ['Увеличить продажи','Онлайн-оплата','Доставка'], techs: ['Интернет-магазин','Платежи','CRM','Интеграции с кассой']},
-    {label: 'Школа — Запись и оплата', business: ['Школа','Образование'], goals: ['Онлайн-запись','Онлайн-оплата','Аналитика'], techs: ['Сайт','Платежи','CRM','BI-дэшборд']}
-  ]
 
   const [step, setStep] = useState<number>(1)
   const [selectedBusiness, setSelectedBusiness] = useState<string>('')
   const [selectedGoals, setSelectedGoals] = useState<string[]>([])
-  const [budgetLevel, setBudgetLevel] = useState<string>('MVP')
   const [selectedTechs, setSelectedTechs] = useState<string[]>([])
   const [context, setContext] = useState<string>('')
   const [showRequestModal, setShowRequestModal] = useState<boolean>(false)
   const [contact, setContact] = useState<Contact>({fullName:'', whatsapp:''})
-  const [activeResultTab, setActiveResultTab] = useState<string>('MVP')
   const [proposal, setProposal] = useState<Proposal | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [customBusiness, setCustomBusiness] = useState<string>('')
   const [showCustomBusiness, setShowCustomBusiness] = useState<boolean>(false)
   const [customGoal, setCustomGoal] = useState<string>('')
   const [showCustomGoal, setShowCustomGoal] = useState<boolean>(false)
-  const [budgetRange, setBudgetRange] = useState<{min: number, max: number}>({min: 20000, max: 2000000})
+  const [budgetRange, setBudgetRange] = useState<{min: number, max: number}>({min: DEFAULT_BUDGET.min, max: DEFAULT_BUDGET.max})
   const [timelineRange, setTimelineRange] = useState<{min: number, max: number}>({min: 2, max: 12})
+  // Признак того, что бюджет осознанно подтверждён, а не оставлен дефолтным
+  const [budgetTouched, setBudgetTouched] = useState<boolean>(false)
+  // Предложение вышло за рамки бюджета/срока - показываем честную подпись
+  const [outOfRange, setOutOfRange] = useState<{budget: boolean, timeline: boolean}>({budget: false, timeline: false})
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [selectedRecommendations, setSelectedRecommendations] = useState<number[]>([])
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -224,7 +271,7 @@ export default function AiSolutionPicker() {
 
 
   const resetWizard = ()=>{
-    setStep(1); setSelectedBusiness(''); setSelectedGoals([]); setBudgetLevel('MVP'); setSelectedTechs([]); setContext(''); setProposal(null); setCustomBusiness(''); setShowCustomBusiness(false); setCustomGoal(''); setShowCustomGoal(false); setBudgetRange({min: 20000, max: 2000000}); setTimelineRange({min: 2, max: 12}); setIsGenerating(false); setSelectedRecommendations([]); setBudgetInputs({min: '', max: ''}); setTimelineInputs({min: '', max: ''}); setInputFocus({budget_min: false, budget_max: false, timeline_min: false, timeline_max: false}); setContact({fullName:'', whatsapp:''}); setIsSubmitting(false); setDownloadPdf(false); setPhoneValidation({isValid: true, message: ''})
+    setStep(1); setSelectedBusiness(''); setSelectedGoals([]); setSelectedTechs([]); setContext(''); setProposal(null); setCustomBusiness(''); setShowCustomBusiness(false); setCustomGoal(''); setShowCustomGoal(false); setBudgetRange({min: DEFAULT_BUDGET.min, max: DEFAULT_BUDGET.max}); setTimelineRange({min: 2, max: 12}); setBudgetTouched(false); setOutOfRange({budget: false, timeline: false}); setIsGenerating(false); setSelectedRecommendations([]); setBudgetInputs({min: '', max: ''}); setTimelineInputs({min: '', max: ''}); setInputFocus({budget_min: false, budget_max: false, timeline_min: false, timeline_max: false}); setContact({fullName:'', whatsapp:''}); setIsSubmitting(false); setDownloadPdf(false); setPhoneValidation({isValid: true, message: ''})
   }
 
   const editDetails = () => {
@@ -303,13 +350,15 @@ export default function AiSolutionPicker() {
     const numValue = Number(cleanValue)
     
     if (field === 'min') {
-      if (numValue >= 20000 && numValue <= 2000000 && numValue <= budgetRange.max) {
+      if (numValue >= BUDGET_LIMITS.min && numValue <= BUDGET_LIMITS.max && numValue <= budgetRange.max) {
         setBudgetRange({...budgetRange, min: numValue})
+        setBudgetTouched(true)
       }
       setBudgetInputs({...budgetInputs, min: ''})
     } else {
-      if (numValue >= 20000 && numValue <= 2000000 && numValue >= budgetRange.min) {
+      if (numValue >= BUDGET_LIMITS.min && numValue <= BUDGET_LIMITS.max && numValue >= budgetRange.min) {
         setBudgetRange({...budgetRange, max: numValue})
+        setBudgetTouched(true)
       }
       setBudgetInputs({...budgetInputs, max: ''})
     }
@@ -331,12 +380,12 @@ export default function AiSolutionPicker() {
     const numValue = Number(cleanValue)
     
     if (field === 'min') {
-      if (numValue >= 1 && numValue <= 52 && numValue <= timelineRange.max) {
+      if (numValue >= TIMELINE_LIMITS.min && numValue <= TIMELINE_LIMITS.max && numValue <= timelineRange.max) {
         setTimelineRange({...timelineRange, min: numValue})
       }
       setTimelineInputs({...timelineInputs, min: ''})
     } else {
-      if (numValue >= 1 && numValue <= 52 && numValue >= timelineRange.min) {
+      if (numValue >= TIMELINE_LIMITS.min && numValue <= TIMELINE_LIMITS.max && numValue >= timelineRange.min) {
         setTimelineRange({...timelineRange, max: numValue})
       }
       setTimelineInputs({...timelineInputs, max: ''})
@@ -468,25 +517,34 @@ export default function AiSolutionPicker() {
     }
   }
 
-  // Рассчитываем итоговую стоимость и сроки с учетом выбранных рекомендаций
+  // Рассчитываем итоговую стоимость и сроки с учетом выбранных рекомендаций.
+  // Все слагаемые проверяем: обрезанный ответ модели не должен давать NaN на экране.
   const getTotalPriceAndTime = () => {
     if (!proposal) return { price: 0, weeks: 0 }
-    
+
+    const basePrice = isPositiveNumber(proposal.price) ? proposal.price : 0
+    const baseWeeks = isPositiveNumber(proposal.timeline_weeks) ? proposal.timeline_weeks : 0
+
     const additionalCost = selectedRecommendations.reduce((sum, index) => {
-      const rec = proposal.additional_recommendations?.[index]
-      return sum + (rec?.additional_cost || 0)
+      const cost = proposal.additional_recommendations?.[index]?.additional_cost
+      return sum + (isPositiveNumber(cost) ? cost : 0)
     }, 0)
-    
+
     const additionalWeeks = selectedRecommendations.reduce((sum, index) => {
-      const rec = proposal.additional_recommendations?.[index]
-      return sum + (rec?.additional_weeks || 0)
+      const weeks = proposal.additional_recommendations?.[index]?.additional_weeks
+      return sum + (isPositiveNumber(weeks) ? weeks : 0)
     }, 0)
-    
+
     return {
-      price: proposal.price + additionalCost,
-      weeks: proposal.timeline_weeks + additionalWeeks
+      price: basePrice + additionalCost,
+      weeks: baseWeeks + additionalWeeks
     }
   }
+
+  /** Итог с рекомендациями вышел за бюджет, который указал клиент */
+  const totalExceedsBudget = () => getTotalPriceAndTime().price > budgetRange.max
+  /** Итог с рекомендациями вышел за срок, который указал клиент */
+  const totalExceedsTimeline = () => getTotalPriceAndTime().weeks > timelineRange.max
 
   // Handle browser back button
   useEffect(() => {
@@ -518,22 +576,6 @@ export default function AiSolutionPicker() {
 
 
 
-  // Live estimate calculation
-  const estimate = useMemo(()=>{
-    // Base minutes and cost per selected tech
-    const techBase = selectedTechs.length * 80000 // base per tech in KGS (example)
-    const goalsFactor = Math.max(1, selectedGoals.length * 0.25)
-    const businessFactor = Math.max(1, selectedBusiness.length * 0.15)
-    const budgetMultiplier = budgetLevel === 'MVP' ? 0.65 : budgetLevel === 'Оптимальный' ? 1 : 1.6
-    const cost = Math.round( (50000 + techBase) * goalsFactor * businessFactor * budgetMultiplier / 1000 ) * 1000
-
-    // timeframe
-    let weeks = 2 + Math.ceil(selectedTechs.length * (budgetLevel === 'MVP' ? 1 : budgetLevel === 'Оптимальный' ? 1.6 : 2.6))
-    weeks = Math.max(2, weeks)
-
-    return { cost, weeks }
-  },[selectedTechs, selectedGoals, selectedBusiness, budgetLevel])
-
   const generateProposal = async () => {
     setIsGenerating(true)
     let aiResponse = '' // Для доступа в catch блоке
@@ -564,6 +606,8 @@ export default function AiSolutionPicker() {
 7. Укажи технический стек и архитектуру соответствующие бюджету
 8. Опиши реалистичные риски для данного бюджета
 9. Напиши функциональности и дополнительные рекомендации побробно и больше по 5 штук
+10. ОБЯЗАТЕЛЬНО: поля "price" и "timeline_weeks" - целые положительные числа, без текста и пробелов
+11. ОБЯЗАТЕЛЬНО: сумма "duration_weeks" по всем этапам должна быть РАВНА "timeline_weeks"
 
 ФОРМАТ JSON:
 {
@@ -647,6 +691,12 @@ export default function AiSolutionPicker() {
       const data = await response.json()
       aiResponse = data.choices[0].message.content
 
+      // Ответ упёрся в лимит токенов: данные заведомо неполные
+      const wasTruncated = data.choices[0].finish_reason === 'max_tokens'
+      if (wasTruncated) {
+        console.warn('Ответ модели обрезан по лимиту токенов')
+      }
+
       // Очищаем ответ от markdown форматирования
       let cleanResponse = aiResponse.trim()
       
@@ -692,8 +742,38 @@ export default function AiSolutionPicker() {
 
       // Парсим JSON ответ
       const proposalData = JSON.parse(cleanResponse)
-      
-      setProposal(proposalData)
+
+      // Ключевые числа обязательны. Если ответ обрезался и их нет -
+      // уходим в fallback, а не показываем «NaN KGS».
+      if (!isPositiveNumber(proposalData?.price) || !isPositiveNumber(proposalData?.timeline_weeks)) {
+        throw new Error('Некорректные цена или срок в ответе модели')
+      }
+
+      // Смысловое ядро предложения. Дописывание скобок выше может собрать
+      // формально валидный JSON из обрубка - такое показывать нельзя.
+      const hasFunctionality = Array.isArray(proposalData.functionality) && proposalData.functionality.length > 0
+      const hasPhases = Array.isArray(proposalData.phases) && proposalData.phases.length > 0
+
+      if (!hasFunctionality || !hasPhases) {
+        throw new Error('В ответе модели нет функциональности или этапов')
+      }
+
+      // Модель просили держаться диапазона, но полагаться на это нельзя -
+      // приводим к границам и запоминаем факт выхода за них.
+      const clampedPrice = clamp(proposalData.price, budgetRange.min, budgetRange.max)
+      const clampedWeeks = clamp(proposalData.timeline_weeks, timelineRange.min, timelineRange.max)
+
+      setOutOfRange({
+        budget: clampedPrice !== proposalData.price,
+        timeline: clampedWeeks !== proposalData.timeline_weeks
+      })
+
+      setProposal({
+        ...proposalData,
+        price: clampedPrice,
+        timeline_weeks: clampedWeeks,
+        phases: normalizePhases(proposalData.phases, clampedWeeks)
+      })
       setStep(5)
 
     } catch (error) {
@@ -705,9 +785,28 @@ export default function AiSolutionPicker() {
       const goals = selectedGoals.includes('Другое') && customGoal 
         ? selectedGoals.filter(g => g !== 'Другое').concat(customGoal).join(', ')
         : selectedGoals.join(', ')
+      // Fallback учитывает объём выбранного: чем больше технологий и целей,
+      // тем ближе цена к верхней границе бюджета. Середина диапазона
+      // давала одно и то же число и для лендинга, и для ERP.
+      const scopeWeight = clamp(
+        (selectedTechs.length * 0.15) + (selectedGoals.length * 0.05),
+        0,
+        1
+      )
+      const fallbackPrice = Math.round(
+        (budgetRange.min + (budgetRange.max - budgetRange.min) * scopeWeight) / 1000
+      ) * 1000
+      const fallbackWeeks = clamp(
+        Math.ceil(timelineRange.min + (timelineRange.max - timelineRange.min) * scopeWeight),
+        timelineRange.min,
+        timelineRange.max
+      )
+
+      setOutOfRange({ budget: false, timeline: false })
+
       const fallbackProposal = {
-        price: Math.round((budgetRange.min + budgetRange.max) / 2),
-        timeline_weeks: Math.ceil((timelineRange.min + timelineRange.max) / 2),
+        price: clamp(fallbackPrice, budgetRange.min, budgetRange.max),
+        timeline_weeks: fallbackWeeks,
         title: `IT-решение для ${businessType}`,
         description: `Комплексное решение для автоматизации бизнес-процессов в сфере ${businessType}`,
         functionality: [
@@ -719,38 +818,43 @@ export default function AiSolutionPicker() {
           {
             title: 'Расширенная аналитика',
             description: 'Детальные отчеты и дашборды для анализа данных',
-            additional_cost: Math.round((budgetRange.min + budgetRange.max) / 2 * 0.3),
-            additional_weeks: Math.ceil((timelineRange.min + timelineRange.max) / 2 * 0.4),
+            additional_cost: Math.round(fallbackPrice * 0.3),
+            additional_weeks: Math.max(1, Math.ceil(fallbackWeeks * 0.4)),
             priority: 'high' as const
           },
           {
             title: 'Мобильное приложение',
             description: 'Нативное мобильное приложение для iOS и Android',
-            additional_cost: Math.round((budgetRange.min + budgetRange.max) / 2 * 0.6),
-            additional_weeks: Math.ceil((timelineRange.min + timelineRange.max) / 2 * 0.8),
+            additional_cost: Math.round(fallbackPrice * 0.6),
+            additional_weeks: Math.max(1, Math.ceil(fallbackWeeks * 0.8)),
             priority: 'medium' as const
           }
         ],
-        phases: [
-          {
-            name: 'Анализ и проектирование',
-            duration_weeks: 1,
-            description: 'Анализ требований и создание технического задания',
-            deliverables: ['Техническое задание', 'Дизайн архитектуры']
-          },
-          {
-            name: 'Разработка MVP',
-            duration_weeks: Math.ceil((timelineRange.min + timelineRange.max) / 2 * 0.6),
-            description: 'Разработка базового функционала',
-            deliverables: ['MVP версия', 'Базовое тестирование']
-          },
-          {
-            name: 'Финализация и запуск',
-            duration_weeks: Math.ceil((timelineRange.min + timelineRange.max) / 2 * 0.4),
-            description: 'Доработка, тестирование и запуск',
-            deliverables: ['Готовый продукт', 'Документация', 'Обучение пользователей']
-          }
-        ],
+        // Длительности приводим к общему сроку, чтобы сумма этапов
+        // не расходилась с заявленным timeline_weeks
+        phases: normalizePhases(
+          [
+            {
+              name: 'Анализ и проектирование',
+              duration_weeks: 1,
+              description: 'Анализ требований и создание технического задания',
+              deliverables: ['Техническое задание', 'Дизайн архитектуры']
+            },
+            {
+              name: 'Разработка MVP',
+              duration_weeks: Math.max(1, Math.round(fallbackWeeks * 0.6)),
+              description: 'Разработка базового функционала',
+              deliverables: ['MVP версия', 'Базовое тестирование']
+            },
+            {
+              name: 'Финализация и запуск',
+              duration_weeks: Math.max(1, Math.round(fallbackWeeks * 0.4)),
+              description: 'Доработка, тестирование и запуск',
+              deliverables: ['Готовый продукт', 'Документация', 'Обучение пользователей']
+            }
+          ],
+          fallbackWeeks
+        ),
         technical_stack: {
           frontend: ['React', 'Next.js', 'Tailwind CSS'],
           backend: ['Node.js', 'Express'],
@@ -961,7 +1065,7 @@ export default function AiSolutionPicker() {
             {step === 1 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-medium text-black">Шаг 1 — Сфера бизнеса</h2>
+                  <h2 className="font-medium text-black">Шаг 1 - Сфера бизнеса</h2>
                   <div className="text-sm text-gray-400 font-light">Выберите одну</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -992,7 +1096,7 @@ export default function AiSolutionPicker() {
             {step === 2 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-medium text-black">Шаг 2 — Цели</h2>
+                  <h2 className="font-medium text-black">Шаг 2 - Цели</h2>
                   <div className="text-sm text-gray-400 font-light">Мультовыбор</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1024,7 +1128,7 @@ export default function AiSolutionPicker() {
 
             {step === 3 && (
               <div>
-                <h2 className="font-medium mb-6 text-black">Шаг 3 — Бюджет и сроки</h2>
+                <h2 className="font-medium mb-6 text-black">Шаг 3 - Бюджет и сроки</h2>
                 
                 {/* Budget Range Slider */}
                 <div className="mb-6 sm:mb-8">
@@ -1053,6 +1157,7 @@ export default function AiSolutionPicker() {
                           const value = Number(e.target.value);
                           if (value <= budgetRange.max) {
                             setBudgetRange({...budgetRange, min: value});
+                            setBudgetTouched(true);
                           }
                         }}
                         className="absolute top-0 left-0 w-full h-6 bg-transparent appearance-none cursor-pointer range-slider-thumb-min"
@@ -1068,6 +1173,7 @@ export default function AiSolutionPicker() {
                           const value = Number(e.target.value);
                           if (value >= budgetRange.min) {
                             setBudgetRange({...budgetRange, max: value});
+                            setBudgetTouched(true);
                           }
                         }}
                         className="absolute top-0 left-0 w-full h-6 bg-transparent appearance-none cursor-pointer range-slider-thumb-max"
@@ -1210,16 +1316,28 @@ export default function AiSolutionPicker() {
                   </div>
                 </div>
 
+                {!budgetTouched && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    Укажите бюджет, чтобы расчёт был точным - сдвиньте ползунок или введите сумму вручную.
+                  </p>
+                )}
+
                 <div className="mt-4 sm:mt-6 flex justify-between">
                   <button onClick={()=>setStep(2)} className="px-4 py-2 rounded-md border border-gray-300 text-black hover:bg-gray-50 transition-colors duration-200 text-sm sm:text-base">Назад</button>
-                  <button onClick={()=>setStep(4)} className="px-4 py-2 rounded-md bg-black text-white hover:bg-gray-800 transition-colors duration-200 text-sm sm:text-base">Дальше</button>
+                  <button
+                    disabled={!budgetTouched}
+                    onClick={()=>setStep(4)}
+                    className={`px-4 py-2 rounded-md text-sm sm:text-base transition-colors duration-200 ${!budgetTouched ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}
+                  >
+                    Дальше
+                  </button>
                 </div>
               </div>
             )}
 
             {step === 4 && (
               <div>
-                <h2 className="font-medium mb-2 text-black">Шаг 4 — Предпочтительные технологии</h2>
+                <h2 className="font-medium mb-2 text-black">Шаг 4 - Предпочтительные технологии</h2>
                 <div className="flex flex-wrap gap-2">
                   {TECHS.map(t=> (
                     <button key={t} onClick={()=>toggleTechs(selectedTechs,setSelectedTechs,t)} className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border font-light transition-colors duration-200 text-sm ${selectedTechs.includes(t) ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-600'}`}>{t}</button>
@@ -1270,26 +1388,46 @@ export default function AiSolutionPicker() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 rounded-xl border border-blue-200">
                       <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Стоимость проекта (примерная)</h3>
-                      <div className="text-2xl sm:text-3xl font-bold text-black">{getTotalPriceAndTime().price?.toLocaleString() || 'Уточняется'} KGS</div>
+                      <div className="text-2xl sm:text-3xl font-bold text-black">{getTotalPriceAndTime().price > 0 ? getTotalPriceAndTime().price.toLocaleString() + ' KGS' : 'Уточняется'}</div>
                       <p className="text-sm text-gray-500 mt-2">
                         {selectedRecommendations.length > 0 
                           ? `Базовая: ${proposal.price?.toLocaleString()} KGS + рекомендации: ${(getTotalPriceAndTime().price - proposal.price).toLocaleString()} KGS`
                           : 'В рамках выбранного бюджета'
                         }
                       </p>
+                      {selectedRecommendations.length > 0 && totalExceedsBudget() && (
+                        <p className="text-xs text-amber-700 mt-2">
+                          Итог с рекомендациями выше указанного бюджета ({budgetRange.max.toLocaleString()} KGS).
+                        </p>
+                      )}
+                      {outOfRange.budget && (
+                        <p className="text-xs text-amber-700 mt-2">
+                          Задача выходит за рамки бюджета - сумма приведена к верхней границе, финальную оценку уточним на созвоне.
+                        </p>
+                      )}
                       {proposal.budget_justification && (
                         <p className="text-xs text-blue-700 mt-2 italic">{proposal.budget_justification}</p>
                       )}
                     </div>
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 rounded-xl border border-green-200">
                       <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Срок реализации</h3>
-                      <div className="text-2xl sm:text-3xl font-bold text-black">{getTotalPriceAndTime().weeks || 'Уточняется'} недель</div>
+                      <div className="text-2xl sm:text-3xl font-bold text-black">{getTotalPriceAndTime().weeks > 0 ? getTotalPriceAndTime().weeks + ' недель' : 'Уточняется'}</div>
                       <p className="text-sm text-gray-500 mt-2">
                         {selectedRecommendations.length > 0 
                           ? `Базовые: ${proposal.timeline_weeks} нед. + доп.: ${getTotalPriceAndTime().weeks - proposal.timeline_weeks} нед.`
                           : 'Включая тестирование и запуск'
                         }
                       </p>
+                      {selectedRecommendations.length > 0 && totalExceedsTimeline() && (
+                        <p className="text-xs text-amber-700 mt-2">
+                          Срок с рекомендациями выше указанного ({timelineRange.max} нед.). Часть работ можно вести параллельно - обсудим на созвоне.
+                        </p>
+                      )}
+                      {outOfRange.timeline && (
+                        <p className="text-xs text-amber-700 mt-2">
+                          Объём задач выходит за указанный срок - показан максимум из вашего диапазона.
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1540,11 +1678,11 @@ export default function AiSolutionPicker() {
             <p className="text-xs sm:text-sm text-gray-400 font-light">Просматривайте ориентировочную цену и сроки в реальном времени.</p>
             <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="text-xs sm:text-sm text-gray-400 font-light">Сфера</div>
-              <div className="font-medium text-black text-sm sm:text-base">{selectedBusiness ? (selectedBusiness === 'Другое' && customBusiness ? customBusiness : selectedBusiness) : '—'}</div>
+              <div className="font-medium text-black text-sm sm:text-base">{selectedBusiness ? (selectedBusiness === 'Другое' && customBusiness ? customBusiness : selectedBusiness) : '-'}</div>
               <div className="mt-2 text-xs sm:text-sm text-gray-400 font-light">Цели</div>
-              <div className="font-medium text-black text-sm sm:text-base">{selectedGoals.length ? (selectedGoals.includes('Другое') && customGoal ? selectedGoals.filter(g => g !== 'Другое').concat(customGoal).join(', ') : selectedGoals.join(', ')) : '—'}</div>
+              <div className="font-medium text-black text-sm sm:text-base">{selectedGoals.length ? (selectedGoals.includes('Другое') && customGoal ? selectedGoals.filter(g => g !== 'Другое').concat(customGoal).join(', ') : selectedGoals.join(', ')) : '-'}</div>
               <div className="mt-2 text-xs sm:text-sm text-gray-400 font-light">Технологии</div>
-              <div className="font-medium text-black text-sm sm:text-base">{selectedTechs.length ? selectedTechs.join(', ') : '—'}</div>
+              <div className="font-medium text-black text-sm sm:text-base">{selectedTechs.length ? selectedTechs.join(', ') : '-'}</div>
               <div className="mt-4 border-t pt-4">
                 <div className="mt-2 text-xs sm:text-sm text-gray-400 font-light">Выбранный бюджет</div>
                 <div className="font-medium text-black text-sm sm:text-base">{budgetRange.min.toLocaleString()} - {budgetRange.max.toLocaleString()} KGS</div>

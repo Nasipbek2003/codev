@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { testDatabaseConnection, getAdminTelegramIds } from '../../../lib/database'
 
 export async function GET(request: NextRequest) {
+  // Отладочный эндпоинт: раскрывает admin Telegram ID и состояние БД.
+  // В проде должен быть недоступен.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     console.log('🔍 Тестирование подключения к базе данных...')
     

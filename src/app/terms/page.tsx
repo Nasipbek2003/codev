@@ -26,7 +26,7 @@ export default function TermsOfService() {
           </p>
           <div className="bg-gradient-to-r from-primary/5 to-transparent p-4 rounded-lg border-l-4 border-primary">
             <p className="text-foreground/70 leading-relaxed text-sm">
-              Наша цель — создавать качественные IT-решения, которые помогают вашему бизнесу расти и развиваться.
+              Наша цель - создавать качественные IT-решения, которые помогают вашему бизнесу расти и развиваться.
             </p>
           </div>
         </div>
