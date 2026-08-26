@@ -8,6 +8,13 @@ interface UseIntersectionObserverOptions {
   triggerOnce?: boolean;
 }
 
+/**
+ * Низкие пороги-страховка. Для секции, которая выше экрана, заданный ratio
+ * (например 0.1) физически недостижим, и без этих порогов observer просто
+ * не получит ни одного вызова после начала пересечения.
+ */
+const FALLBACK_THRESHOLDS = [0, 0.005, 0.01, 0.02, 0.05];
+
 export function useIntersectionObserver(
   options: UseIntersectionObserverOptions = {}
 ) {
@@ -25,10 +32,27 @@ export function useIntersectionObserver(
     const target = targetRef.current;
     if (!target) return;
 
+    const requested = Array.isArray(threshold) ? threshold : [threshold];
+    const minThreshold = Math.min(...requested);
+    const thresholds = Array.from(
+      new Set([...FALLBACK_THRESHOLDS, ...requested])
+    ).sort((a, b) => a - b);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const isIntersecting = entry.isIntersecting;
-        
+        const rootHeight = entry.rootBounds?.height ?? window.innerHeight;
+
+        // Секция выше вьюпорта: 10% её площади не поместятся в экран, поэтому
+        // ratio-порог никогда не будет достигнут. В этом случае считаем секцию
+        // видимой по самому факту пересечения - запас в пикселях уже задан
+        // через rootMargin.
+        const tallerThanViewport =
+          entry.boundingClientRect.height > rootHeight;
+
+        const isIntersecting =
+          entry.isIntersecting &&
+          (tallerThanViewport || entry.intersectionRatio >= minThreshold);
+
         if (isIntersecting && (!triggerOnce || !hasTriggered)) {
           setIsVisible(true);
           if (triggerOnce) {
@@ -39,7 +63,7 @@ export function useIntersectionObserver(
         }
       },
       {
-        threshold,
+        threshold: thresholds,
         rootMargin
       }
     );
